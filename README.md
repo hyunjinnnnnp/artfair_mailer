@@ -14,46 +14,63 @@
 
 
 ## clasp를 사용한 사용 방법
-- 이 과정은 생략하려면 sendMail.js의 코드를 Gooogle Apps Script에 단순 복붙해서 사용할 수 있습니다.
+- 이 과정은 생략하려면 sendMail.js의 코드를 사용하실 구글 스프레드 시트에서 생성된 Gooogle Apps Script에 단순 복붙해서 사용할 수 있습니다.
 
 1. **이 프로젝트를 클론합니다.**
 
    ```bash
    git clone https://github.com/hyunjinnnnnp/artfair_mailer.git
+   ```
 
 2. **프로젝트 디렉토리로 이동합니다.**
 
-    ```cd artfair_mailer
+    ```bash
+    cd artfair_mailer
+    ```
 
 3. **clasp(Google Apps Script CLI)를 설치합니다.**
 
-    ```npm install -g @google/clasp
+    ```bash
+    npm install -g @google/clasp
+    ```
 
 4. **clasp를 통해 Google Apps Script 프로젝트를 설정합니다.**
-- clasp를 사용하여 Google Apps Script 프로젝트를 연결하고 설정합니다.**
+- clasp를 사용하여 Google Apps Script 프로젝트를 연결하고 설정합니다.
 
-    ```clasp create --title "artfair_mailer" --type sheets
+    ```bash
+    clasp create --title "artfair_mailer" --type sheets
+    ```
 
 5. **스크립트를 Google Apps Script에 배포합니다.**
 - 로컬에서 수정하고 Google Apps Script 프로젝트에 업로드합니다.
-    ```clasp push
+
+    ```bash
+    clasp push
+    ```
 
 - Google Apps Script에서 수정된 내역을 로컬에 받아올 수 있습니다.
-    ```clasp pull
+
+    ```bash
+    clasp pull
+    ```
 
 6. **배포된 스크립트의 Apps Script 고유 식별자를 스프레드 시트에 직접 연결된 Apps Script에 연결시켜줍니다.**
 - 배포된 스크립트의 고유 식별자 값(설정 > ID)을 복사합니다.
 - 사용 할 스프레드 시트 > 화면 상단의 확장 프로그램 > App Script > 라이브러리에 추가
-- 
+
 
 7. **스프레드시트에 직접 연결된 Apps Script 파일에 새로운 스크립트를 만들어 아래 코드를 업로드합니다**
-    ```function onOpen() {
+- 좌측 편집기'< >' 파일 추가 후 스크립트 생성
+
+    ```javascript
+    function onOpen() {
     artfair_mailer.onOpen();
     }
 
     function sendArtistPdfsUsingSheetName() {
     artfair_mailer.sendArtistPdfsUsingSheetName();
     }
+    ```
 
 8. **스프레드시트에서 사용할 Google Drive 폴더 설정**
 
