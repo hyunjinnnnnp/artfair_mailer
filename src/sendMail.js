@@ -113,8 +113,8 @@ function protectColumns() {
 
 // 스프레드시트 값이 임의로 수정되었을 경우 롤백
 function onEdit(e) {
-  const sheet = e.range.getSheet();
-  const protectedCols = [1, 2, 3, 4];  // 보호할 열 (1~4열: 타임스탬프, 이름, 이메일, 작가 목록)
+  const protectedCols = [1, 2, 3, 4, 5];
+  // 이후에 추가되는 내용이 있을지도 모르니 타임스탬프~발송일시까지만 수정을 막는다
   const col = e.range.getColumn();      // 수정된 열 번호
 
   // 수정된 열이 보호된 열 중 하나라면
