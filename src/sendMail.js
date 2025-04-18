@@ -91,7 +91,44 @@ function sendArtistPdfsUsingSheetName() {
   }
 }
 
+// 스프레드시트의 고객 정보 수정 제한
+function protectColumns() {
+  // Protect the active sheet, then remove all other users from the list of
+  // editors.
+  const sheet = SpreadsheetApp.getActiveSheet();
+
+  const protection = sheet.protect().setDescription('Sample protected sheet');
+
+  // Ensure the current user is an editor before removing others. Otherwise, if
+  // the user's edit permission comes from a group, the script throws an exception
+  // upon removing the group.
+  const me = Session.getEffectiveUser();
+  protection.setWarningOnly(false); // 설정해야만 add, remove editor 사용 가능
+  protection.addEditor(me);
+  protection.removeEditors(protection.getEditors());
+  if (protection.canDomainEdit()) {
+    protection.setDomainEdit(false);
+  }
+}
+
+// 스프레드시트 값이 임의로 수정되었을 경우 롤백
+function onEdit(e) {
+  const sheet = e.range.getSheet();
+  const protectedCols = [1, 2, 3, 4];  // 보호할 열 (1~4열: 타임스탬프, 이름, 이메일, 작가 목록)
+  const col = e.range.getColumn();      // 수정된 열 번호
+
+  // 수정된 열이 보호된 열 중 하나라면
+  if (protectedCols.includes(col)) {
+    const oldValue = e.oldValue;
+    // 수정된 값을 이전 값으로 되돌림 (롤백)
+    e.range.setValue(oldValue);
+  }
+}
+
+
 function onOpen() {
+  protectColumns();
+
   const ui = SpreadsheetApp.getUi();
   ui.createMenu('🖼 갤러리 도구')
     .addItem('이메일 발송 시작', 'sendArtistPdfsUsingSheetName')
@@ -100,5 +137,5 @@ function onOpen() {
 
 const artfair_mailer = {
   onOpen,
-  sendArtistPdfsUsingSheetName
+  sendArtistPdfsUsingSheetName,
 }
