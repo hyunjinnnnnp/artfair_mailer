@@ -41,7 +41,7 @@ function sendArtistEmail(email, artistList, fileMap) {
       attachments.push(file.getAs(MimeType.PDF));
     }
   });
-
+ 
   if (attachments.length > 0) {
     const subject = `${spreadsheetName} - 작가 작품 정보`;
     const body = `안녕하세요,\n${spreadsheetName}에서 관심 주신 작가님의 PDF를 첨부드립니다:\n\n${artistList.join(", ")}`;
@@ -55,36 +55,53 @@ function sendArtistEmail(email, artistList, fileMap) {
 /**
  * 버튼 클릭 시 발송
  */
-function sendArtistPdfsUsingSheetName() {
+
+function handleSendButtonClick() {
   const ui = SpreadsheetApp.getUi();
   // get active sheet로 할 때만 작동 !!!
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
   const data = sheet.getDataRange().getValues();
+  let rowNum = null;
 
   try {
     const fileMap = getPdfFileMap();
-
+  
     data.slice(1).forEach((row, idx) => {
-      const rowNum = idx + 2;
+      rowNum = idx + 2;
       const email = row[1];
       const artistsRaw = row[2];
       const status = row[3];
 
       if (status !== "전송됨" && email && artistsRaw) {
-        const artistList = artistsRaw.split(",").map(a => a.trim());
+        try{const artistList = artistsRaw.split(",").map(a => a.trim());
         const sent = sendArtistEmail(email, artistList, fileMap);
 
         if (sent) {
           sheet.getRange(rowNum, 4).setValue("전송됨");
           sheet.getRange(rowNum, 5).setValue(new Date());
+          ui.alert("✅ 이메일 발송이 완료되었습니다.");
+        }else{
+          // 전송 실패
+          sheet.getRange(rowNum, 4).setValue("전송 오류");
+          sheet.getRange(rowNum, 5).setValue(new Date());
+        }}catch(innerError){
+          sheet.getRange(rowNum, 4).setValue("오류 발생");
+          sheet.getRange(rowNum, 5).setValue(new Date());
+          sheet.getRange(rowNum, 6).setValue(innerError.message);
+          Logger.log(`❌ ${rowNum}행 오류: ${innerError.message}`);
+          ui.alert("❌ 이메일 발송 중 문제가 발생했습니다.\n\n" + error.message);
         }
       }
     });
 
-    ui.alert("✅ 이메일 발송이 완료되었습니다.");
   } catch (error) {
-    Logger.log("🚨 오류 발생: " + error.message);
-    ui.alert("⚠️ 이메일 발송 중 문제가 발생했습니다.\n\n" + error.message);
+    Logger.log("🚨 전체 처리 중 오류 발생: " + error.message);
+    ui.alert("❌ 전체 처리 중 오류가 발생했습니다" + error.message);
+    if (rowNum !== null) {
+      sheet.getRange(rowNum, 4).setValue("전체 처리 오류");
+      sheet.getRange(rowNum, 5).setValue(new Date());
+      sheet.getRange(rowNum, 6).setValue(error.message);
+    }
   }
 }
 
@@ -93,8 +110,6 @@ function sendArtistPdfsUsingSheetName() {
  */
 function onFormSubmit(e) {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  // const ui = SpreadsheetApp.getUi();
-  // 폼서브밋은 UI를 사용할 수 없는 백그라운드에서 실행되기 때문에 여기 작성하면 안됨
   const row = e.range.getRow();
 
   try {
@@ -114,12 +129,9 @@ function onFormSubmit(e) {
           sheet.getRange(row, 5).setValue(new Date());
         }
       }
-    
-
-    // ui.alert("✅ 이메일 발송이 완료되었습니다.");
   } catch (error) {
     Logger.log("🚨 오류 발생: " + error.message);
-    // ui.alert("⚠️ 이메일 발송 중 문제가 발생했습니다.\n\n" + error.message);
+    
   }
 }
 
@@ -156,13 +168,14 @@ function onEdit(e) {
 
 function onOpen() {
   protectColumns();
+  const sheet = SpreadsheetApp.getActiveSpreadsheet();
   const ui = SpreadsheetApp.getUi();
   ui.createMenu('🖼 갤러리 도구')
-    .addItem('이메일 발송 시작', 'sendArtistPdfsUsingSheetName')
+    .addItem('이메일 발송 시작', 'handleSendButtonClick')
     .addToUi();
 }
 
 // const artfair_mailer = {
 //   onOpen,
-//   sendArtistPdfsUsingSheetName,
+//   handleSendButtonClick,
 // }
