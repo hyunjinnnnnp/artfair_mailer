@@ -79,7 +79,9 @@ function onOpen() {
   protectColumns();
   initializeHeaders();
   const ui = SpreadsheetApp.getUi();
-  ui.createMenu('🖼 갤러리 도구')
-    .addItem('이메일 발송 시작', 'handleSendButtonClick')
-    .addToUi();
+
+  ui.createMenu("🖼 갤러리 도구")
+  .addItem("✅ 구글 드라이브 폴더명 체크하기", "drive_checkFolderExistence")
+  .addItem("📧 이메일 발송 시작", "handleSendButtonClick")
+  .addToUi();
 }

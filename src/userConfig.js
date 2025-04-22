@@ -23,5 +23,6 @@
 const USER = {
   TIMEZONE: TIMEZONE.SEOUL,
   GOOGLE_PARENT_FOLDER: '아트페어_PDF',
+  GOOGLE_FAIR_FOLDER: 'art_paris_2025'
 }
 
