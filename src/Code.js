@@ -62,29 +62,18 @@ function sendArtistEmail(email, name, artistList, fileMap) {
 }
 
 /**
- * 버튼 클릭 시 발송
+ * 공통: 한 행의 이메일 발송을 시도하고 결과(성공/실패)를 시트에 기록.
  */
+function handleRowSend(row, rowNum, fileMap, sheet){
+  const email = row[COL_INDEX.EMAIL];
+  const name = row[COL_INDEX.NAME];
+  const artistsRaw = row[COL_INDEX.ARTISTS];
+  const status = row[COL_INDEX.STATUS];
 
-function handleSendButtonClick() {
-  const ui = SpreadsheetApp.getUi();
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  const data = sheet.getDataRange().getValues();
-  let rowNum = null;
-  // TO DO: 모든 데이터를 가져와서 확인하는 게 아니라, 전송 안된 목록만 가져와서 처리하는 게 효율적이지 않을까?
-
-  try {
-    const fileMap = getPdfFileMap();
-  
-    data.slice(1).forEach((row, idx) => {
-      rowNum = idx + 2;
-      const email = row[COL_INDEX.EMAIL];
-      const name = row[COL_INDEX.NAME];
-      const artistsRaw = row[COL_INDEX.ARTISTS];
-      const status = row[COL_INDEX.STATUS];
-
-      if (status === "전송됨" || !email || !name || !artistsRaw){
-        return;
-      }
+  try{
+    if (status === STATUS.SENT || !email || !name || !artistsRaw){
+      return;
+    }
 
       const artistList = artistsRaw.split(",").map(a => a.trim());
       const sent = sendArtistEmail(email, name, artistList, fileMap);
@@ -93,19 +82,41 @@ function handleSendButtonClick() {
       if (!sent) {
         throw new Error(`❌ 이메일 전송 실패 (행 ${rowNum}): ${email}`);
       }
-      sheet.getRange(rowNum, COL_NUM.STATUS).setValue("전송됨");
+      sheet.getRange(rowNum, COL_NUM.STATUS).setValue(STATUS.SENT);
       sheet.getRange(rowNum, COL_NUM.EMAIL_SENT_AT).setValue(now);
-    });
-    ui.alert("✅ 이메일 발송이 완료되었습니다.")
-
-  } catch (error) {
-    Logger.log("🚨 전체 처리 중 오류 발생: " + error.message);
-    ui.alert("❌ 이메일 발송 중 중 오류가 발생했습니다" + error.message);
-    if (rowNum !== null) {
-      sheet.getRange(rowNum, COL_NUM.STATUS).setValue("전체 처리 오류");
+  }catch(error){
+      sheet.getRange(rowNum, COL_NUM.STATUS).setValue(STATUS.PROCESS_ERROR);
       sheet.getRange(rowNum, COL_NUM.EMAIL_SENT_AT).setValue(new Date());
       sheet.getRange(rowNum, COL_NUM.ERROR).setValue(error.message);
-    }
+      Logger.log(`🚨 [${rowNum}행] 오류: ${err.message}`);
+  }
+}
+
+/**
+ * 버튼 클릭 시 발송
+ */
+
+function handleSendButtonClick() {
+  const ui = SpreadsheetApp.getUi();
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  const data = sheet.getDataRange().getValues();
+  let rowNum = null;
+
+  const pendingRows = data.slice(1).filter(row => row[COL_INDEX.STATUS] !== STATUS.SENT && row[COL_INDEX.EMAIL] && row[COL_INDEX.NAME] && row[COL_INDEX.ARTISTS]);
+
+  try {
+    const fileMap = getPdfFileMap();
+  
+    pendingRows.slice(1).forEach((row, idx) => {
+      rowNum = idx + 2;
+      // slice(1)로 헤더를 제외한 두 번째 행부터 시작하는 데이터 배열이기 때문에 +2;
+      handleRowSend(row, rowNum, fileMap, sheet);
+    });
+
+    ui.alert("✅ 이메일 발송이 완료되었습니다.")
+  } catch (error) {
+    Logger.log("🚨 이메일 발송 전체 처리 중 오류 발생: " + error.message);
+    ui.alert("❌ 이메일 발송 중 중 오류가 발생했습니다" + error.message);
   }
 }
 
@@ -118,24 +129,12 @@ function onFormSubmit(e) {
 
   try {
     const rowData = sheet.getRange(row, 1, 1, sheet.getLastColumn()).getValues()[0];
-    const email = rowData[COL_INDEX.EMAIL];
-    const name = rowData[COL_INDEX.NAME];
-    const artistsRaw = rowData[COL_INDEX.ARTISTS];
-    const status = rowData[COL_INDEX.STATUS];
     const fileMap = getPdfFileMap();
-
-    if (status !== "전송됨" && email && name && artistsRaw) {
-      const artistList = artistsRaw.split(",").map(a => a.trim());
-      const sent = sendArtistEmail(email, name, artistList, fileMap);
-
-      if (sent) {
-        sheet.getRange(row, COL_NUM.STATUS).setValue("전송됨");
-        const formattedDate = Utilities.formatDate(new Date(), TIMEZONE.SEOUL, "yyyy-MM-dd HH:mm:ss");
-        sheet.getRange(row, COL_NUM.EMAIL_SENT_AT).setValue(formattedDate);
-      }
-    }
+    handleRowSend(rowData, row, fileMap, sheet);
+    
   } catch (error) {
     Logger.log("🚨 오류 발생: " + error.message);
+    sheet.getRange(row, COL_NUM.STATUS).setValue(STATUS.PROCESS_ERROR);
     sheet.getRange(row, COL_NUM.ERROR).setValue(error.message);
   }
 }
