@@ -31,26 +31,14 @@ function email_handleRowSend(row, rowNum, fileMap, sheet){
   const email = row[COL_INDEX.EMAIL];
   const name = row[COL_INDEX.NAME];
   const artistsRaw = row[COL_INDEX.ARTISTS];
-  const status = row[COL_INDEX.STATUS];
+  const artistList = artistsRaw.split(",").map(a => a.trim());
 
-  try{
-    if (status === STATUS.SENT || !email || !name || !artistsRaw){
-      return;
-    }
+  const sent = email_sendArtistEmail(email, name, artistList, fileMap);
+  const now = new Date();
 
-      const artistList = artistsRaw.split(",").map(a => a.trim());
-      const sent = email_sendArtistEmail(email, name, artistList, fileMap);
-      const now = new Date();
-
-      if (!sent) {
-        throw new Error(`❌ 이메일 전송 실패 (행 ${rowNum}): ${email}`);
-      }
-      sheet.getRange(rowNum, COL_NUM.STATUS).setValue(STATUS.SENT);
-      sheet.getRange(rowNum, COL_NUM.EMAIL_SENT_AT).setValue(now);
-  }catch(error){
-      sheet.getRange(rowNum, COL_NUM.STATUS).setValue(STATUS.PROCESS_ERROR);
-      sheet.getRange(rowNum, COL_NUM.EMAIL_SENT_AT).setValue(new Date());
-      sheet.getRange(rowNum, COL_NUM.ERROR).setValue(error.message);
-      Logger.log(`🚨 [${rowNum}행] 오류: ${err.message}`);
+  if (!sent) {
+    throw new Error(`❌ 이메일 전송 실패 (행 ${rowNum}): ${email}`);
   }
+  sheet.getRange(rowNum, COL_NUM.STATUS).setValue(STATUS.SENT);
+  sheet.getRange(rowNum, COL_NUM.EMAIL_SENT_AT).setValue(now);
 }

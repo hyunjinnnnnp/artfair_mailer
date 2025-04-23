@@ -43,9 +43,7 @@ function onFormSubmit(e) {
     email_handleRowSend(rowData, row, fileMap, sheet);
     
   } catch (error) {
-    Logger.log("🚨 오류 발생: " + error.message);
-    sheet.getRange(row, COL_NUM.STATUS).setValue(STATUS.PROCESS_ERROR);
-    sheet.getRange(row, COL_NUM.ERROR).setValue(error.message);
+    handleErrorMessage(error, '폼 응답 처리 중', row)
   }
 }
 
