@@ -78,10 +78,21 @@ function initializeHeaders() {
   firstRow.setValues([headers]);
 }
 
+function formatEmailSentAtColumn() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  const colIndex = COL_NUM.EMAIL_SENT_AT;  // 예: 5열이라면 5
+
+  // 해당 열 전체 범위 가져오기 (예: A:A, B:B ...)
+  const range = sheet.getRange(2, colIndex, sheet.getMaxRows() - 1); // 헤더 제외
+
+  // 날짜/시간 포맷 설정
+  range.setNumberFormat("yyyy. m. d 오전/오후 h:mm:ss");
+}
 
 function onOpen() {
   protectColumns();
   initializeHeaders();
+  formatEmailSentAtColumn();
   const ui = SpreadsheetApp.getUi();
 
   ui.createMenu("🖼 갤러리 도구")
