@@ -25,18 +25,37 @@ function email_sendArtistEmail(email, name, artistList, fileMap) {
 
 
 /**
- * 한 행의 이메일 발송을 시도하고 결과(성공/실패)를 시트에 기록.
+ * 이메일 발송을 시도하고 결과(성공/실패)를 시트에 기록.
  */
-function email_handleRowSend(row, rowNum, fileMap){
-  const email = row[COL_INDEX.EMAIL];
-  const name = row[COL_INDEX.NAME];
-  const artistsRaw = row[COL_INDEX.ARTISTS];
-  const artistList = artistsRaw.split(",").map(a => a.trim());
+function email_handleRows(pendingRows, fileMap){
+  const errors = [];
+  const ui = SpreadsheetApp.getUi();
 
-  const sent = email_sendArtistEmail(email, name, artistList, fileMap);
+    pendingRows.forEach((obj)=> {
+      const row = obj.row;
+      const rowNum = obj.index + 1;
+      const email = row[COL_INDEX.EMAIL];
+      const name = row[COL_INDEX.NAME];
+      const artistsRaw = row[COL_INDEX.ARTISTS];
+      const artistList = artistsRaw.split(",").map(a => a.trim());
+      // 하나의 이메일이 발송실패해도 다음 이메일은 발송되어야 한다
+      try {
+        const sent = email_sendArtistEmail(email, name, artistList, fileMap);
+        if(!sent){
+          ui.alert("이메일 발송 실패::: 알 수 없는 오류")
+        }
+        handleSuccessMessage(rowNum);
+      } catch (error) {
+        errors.push({ error, rowNum });
+        handleErrorMessage(errors, '이메일 발송 실패');
+      }
+    })
 
-  if (!sent) {
-    throw new Error(`❌ 이메일 전송 실패 (행 ${rowNum}): ${email}`);
+  
+  if (errors.length < 1) {
+    ui.alert("✅ 모든 이메일 발송 성공");
+  }else{
+    ui.alert("❌ 발송에 실패한 이메일이 있습니다");
   }
-  handleSuccessMessage(rowNum);
+
 }

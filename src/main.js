@@ -9,7 +9,7 @@
 function handleSendButtonClick() {
   const ui = SpreadsheetApp.getUi();
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  const data = sheet.getDataRange().getValues();
+  const data = sheet.getDataRange().getValues(); // data 인덱스는 0부터 시작하는 값
 
   const pendingRows = data
     .map((row, index) => ({ row, index })) // 원래 행 보존
@@ -22,18 +22,14 @@ function handleSendButtonClick() {
               row[COL_INDEX.ARTISTS];
     });
 
-  try {
     const fileMap = drive_getPdfFileMap();
   
-    pendingRows.forEach((obj) => {
-      const row = obj.row;
-      const rowNum = obj.index + 1;
-      email_handleRowSend(row, rowNum, fileMap);
-    });
-  } catch (error) {
-    Logger.log("🚨 이메일 발송 전체 처리 중 오류 발생: " + error.message);
-    ui.alert("❌ 이메일 발송 중 중 오류가 발생했습니다" + error.message);
-  }
+
+    // ++++++ 하나의 이메일 보낼 때마다 함수 호출 x
+    // []을 넘겨주고 안에서 처리한다
+    // email_handleRow 원래 사용하던 함수들 다 바꿔줘야 함
+    // try catch????
+    email_handleRows(pendingRows, fileMap);
 }
 
 /**
@@ -49,22 +45,23 @@ function onFormSubmit(e) {
     email_handleRowSend(rowData, row, fileMap);
     
   } catch (error) {
-    handleErrorMessage(error, '폼 응답 처리 중 에러 발생', row)
+    const errorDetails = { error, row }
+    handleErrorMessage(errorDetails, '폼 응답 처리 중 에러 발생')
   }
 }
 
 /**
  * MEMO 컬럼을 제외한 다른 컬럼에 대한 수정이 발생하면, 해당 수정은 자동으로 이전 값으로 되돌려집니다.
  */
-function onEdit(e) {
-  const memoCol = COL_NUM.MEMO;
-  const editedCol = e.range.getColumn();
+// function onEdit(e) {
+//   const memoCol = COL_NUM.MEMO;
+//   const editedCol = e.range.getColumn();
 
-  if (editedCol !== memoCol) {
-    const oldValue = e.oldValue;
-    e.range.setValue(oldValue);
-  }
-}
+//   if (editedCol !== memoCol) {
+//     const oldValue = e.oldValue;
+//     e.range.setValue(oldValue);
+//   }
+// }
 
 
 /** 
@@ -78,6 +75,9 @@ function initializeHeaders() {
   firstRow.setValues([headers]);
 }
 
+/** 
+ * 이메일 발송시간 형식 변환
+ */
 function formatEmailSentAtColumn() {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
   const colIndex = COL_NUM.EMAIL_SENT_AT;  // 예: 5열이라면 5
