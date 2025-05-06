@@ -17,8 +17,8 @@ function showFolderNotFoundDialog(folderName) {
     <br>
     <p><strong>폴더 구조는 다음과 같습니다:</strong></p>
     <p>Google 드라이브</p>
-    <p>&nbsp;&nbsp;└── ${USER.GOOGLE_PARENT_FOLDER} (최상위 폴더 이름)</p>
-    <p>&nbsp;&nbsp;&nbsp;&nbsp;└── ${USER.GOOGLE_FAIR_FOLDER} (스프레드시트 이름과 동일해야 함)</p>
+    <p>&nbsp;&nbsp;└── ${USER.GOOGLE_PARENT_FOLDER_NAME} (최상위 폴더 이름)</p>
+    <p>&nbsp;&nbsp;&nbsp;&nbsp;└── ${USER.GOOGLE_FAIR_FOLDER_NAME} (스프레드시트 이름과 동일해야 함)</p>
     <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── 작가명_파일들.pdf (여기에 작가별 PDF가 저장됨)</p>
     <br>
     <p>구글 드라이브로 이동하려면 <a href="https://drive.google.com" target="_blank">여기</a>를 클릭하세요.</p>
@@ -36,20 +36,20 @@ function showFolderNotFoundDialog(folderName) {
  */
 function drive_checkFolderExistence() {
   const ui = SpreadsheetApp.getUi();
-  const parentFolders = DriveApp.getFoldersByName(USER.GOOGLE_PARENT_FOLDER);
+  const parentFolders = DriveApp.getFoldersByName(USER.GOOGLE_PARENT_FOLDER_NAME);
 
   if (!parentFolders.hasNext()) {
-    showFolderNotFoundDialog(USER.GOOGLE_PARENT_FOLDER);
+    showFolderNotFoundDialog(USER.GOOGLE_PARENT_FOLDER_NAME);
     return;
   };
 
   const parentFolder = parentFolders.next();
-  const fairFolders = parentFolder.getFoldersByName(USER.GOOGLE_FAIR_FOLDER);
+  const fairFolders = parentFolder.getFoldersByName(USER.GOOGLE_FAIR_FOLDER_NAME);
   if(!fairFolders.hasNext()){
-    showFolderNotFoundDialog(USER.GOOGLE_FAIR_FOLDER);
+    showFolderNotFoundDialog(USER.GOOGLE_FAIR_FOLDER_NAME);
     return;
   }
-  ui.alert(`✅ 구글 드라이브에서 '${USER.GOOGLE_PARENT_FOLDER}' 폴더 안에 '${USER.GOOGLE_FAIR_FOLDER}' 폴더를 확인했습니다.`);
+  ui.alert(`✅ 구글 드라이브에서 '${USER.GOOGLE_PARENT_FOLDER_NAME}' 폴더 안에 '${USER.GOOGLE_FAIR_FOLDER_NAME}' 폴더를 확인했습니다.`);
 }
 
 /**
@@ -60,6 +60,7 @@ function drive_getTargetFolder() {
     const sheet = SpreadsheetApp.getActiveSpreadsheet();
     const spreadsheetName = sheet.getName();
 
+    const parentFolderName = USER.GOOGLE_PARENT_FOLDER_NAME;
     const parentFolders = DriveApp.getFoldersByName(parentFolderName);
     if (!parentFolders.hasNext()) {
       throw new Error(`❌ Google 드라이브에 '${parentFolderName}'라는 폴더가 없습니다.`);

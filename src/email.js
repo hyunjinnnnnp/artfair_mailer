@@ -27,18 +27,16 @@ function email_sendArtistEmail(email, name, artistList, fileMap) {
 /**
  * 한 행의 이메일 발송을 시도하고 결과(성공/실패)를 시트에 기록.
  */
-function email_handleRowSend(row, rowNum, fileMap, sheet){
+function email_handleRowSend(row, rowNum, fileMap){
   const email = row[COL_INDEX.EMAIL];
   const name = row[COL_INDEX.NAME];
   const artistsRaw = row[COL_INDEX.ARTISTS];
   const artistList = artistsRaw.split(",").map(a => a.trim());
 
   const sent = email_sendArtistEmail(email, name, artistList, fileMap);
-  const now = new Date();
 
   if (!sent) {
     throw new Error(`❌ 이메일 전송 실패 (행 ${rowNum}): ${email}`);
   }
-  sheet.getRange(rowNum, COL_NUM.STATUS).setValue(STATUS.SENT);
-  sheet.getRange(rowNum, COL_NUM.EMAIL_SENT_AT).setValue(now);
+  handleSuccessMessage(rowNum);
 }

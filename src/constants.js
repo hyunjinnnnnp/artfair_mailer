@@ -34,7 +34,4 @@ Object.keys(COL_INDEX).forEach(key => {
 const STATUS = {
   SENT: "✅ 전송됨",
   ERROR: "❌ 오류 발생",
-  // FORM_TRIGGERED: "폼 트리거 작동함",
-  // SEND_FAILED: "전송 오류",
-  // PROCESS_ERROR: "전체 처리 오류"
 };

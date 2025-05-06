@@ -10,20 +10,26 @@ function handleSendButtonClick() {
   const ui = SpreadsheetApp.getUi();
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
   const data = sheet.getDataRange().getValues();
-  let rowNum = null;
 
-  const pendingRows = data.slice(1).filter(row => row[COL_INDEX.STATUS] !== STATUS.SENT && row[COL_INDEX.EMAIL] && row[COL_INDEX.NAME] && row[COL_INDEX.ARTISTS]);
+  const pendingRows = data
+    .map((row, index) => ({ row, index })) // 원래 행 보존
+    .slice(1) // 헤더 제외
+    .filter(obj => {
+      const row = obj.row;
+      return row[COL_INDEX.STATUS] !== STATUS.SENT && 
+              row[COL_INDEX.EMAIL] && 
+              row[COL_INDEX.NAME] && 
+              row[COL_INDEX.ARTISTS];
+    });
 
   try {
     const fileMap = drive_getPdfFileMap();
   
-    pendingRows.slice(1).forEach((row, idx) => {
-      rowNum = idx + 2;
-      // slice(1)로 헤더를 제외한 두 번째 행부터 시작하는 데이터 배열이기 때문에 +2;
-      email_handleRowSend(row, rowNum, fileMap, sheet);
+    pendingRows.forEach((obj) => {
+      const row = obj.row;
+      const rowNum = obj.index + 1;
+      email_handleRowSend(row, rowNum, fileMap);
     });
-
-    ui.alert("✅ 이메일 발송이 완료되었습니다.")
   } catch (error) {
     Logger.log("🚨 이메일 발송 전체 처리 중 오류 발생: " + error.message);
     ui.alert("❌ 이메일 발송 중 중 오류가 발생했습니다" + error.message);
@@ -40,10 +46,10 @@ function onFormSubmit(e) {
   try {
     const rowData = sheet.getRange(row, 1, 1, sheet.getLastColumn()).getValues()[0];
     const fileMap = drive_getPdfFileMap();
-    email_handleRowSend(rowData, row, fileMap, sheet);
+    email_handleRowSend(rowData, row, fileMap);
     
   } catch (error) {
-    handleErrorMessage(error, '폼 응답 처리 중', row)
+    handleErrorMessage(error, '폼 응답 처리 중 에러 발생', row)
   }
 }
 
